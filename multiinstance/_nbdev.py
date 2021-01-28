@@ -6,8 +6,8 @@ index = {}
 
 modules = []
 
-doc_url = "https://{user}.github.io/multiinstance/"
+doc_url = "https://Dzeiberg.github.io/multiinstance/"
 
-git_url = "https://github.com/{user}/multiinstance/tree/{branch}/"
+git_url = "https://github.com/Dzeiberg/multiinstance/tree/master/"
 
 def custom_doc_links(name): return None
