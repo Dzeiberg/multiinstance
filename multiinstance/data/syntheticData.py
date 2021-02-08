@@ -10,9 +10,9 @@ import numpy as np
 def getBag(nP=None, nU=None,posMean=None, negMean=None,cov=None,
            alphaDistr=lambda: np.random.beta(2,10)):
     if nP is None:
-        nP = np.random.poisson(1) + 1
+        nP = np.random.poisson(25) + 1
     if nU is None:
-        nU = np.random.poisson(4) + 1
+        nU = np.random.poisson(30) + 1
     alpha = alphaDistr()
     numUnlabeledPos = int(alpha * nU)
     numUnlabeledNeg = nU - numUnlabeledPos

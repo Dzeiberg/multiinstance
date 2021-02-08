@@ -34,9 +34,7 @@ def getBootstrapSample(p,u):
 def getEsts(p,u, numbootstraps):
     curves = np.zeros((numbootstraps, 100))
     alphaHats = np.zeros(numbootstraps)
-    for i in tqdm(range(numbootstraps),
-                  total=numbootstraps,
-                  desc="running makeCurve bootstrap repetition",leave=False):
+    for i in range(numbootstraps):
         ps, us = getBootstrapSample(p,u)
         curve = makeCurve(ps,us).reshape((1,-1))
         curves[i] = curve
@@ -69,7 +67,7 @@ def getCliqueAlphaHats(ds, cliques, numbootstraps=10):
     return alphaHats, curves
 
 def getAlphaPrime(cliques, cliqueEsts):
-    bagNums = set(chain.from_iterable(cliques))
+    bagNums = sorted(set(chain.from_iterable(cliques)))
     alphaPrime = np.zeros(len(bagNums))
     for bn in bagNums:
         inClique = [bn in c for c in cliques]
