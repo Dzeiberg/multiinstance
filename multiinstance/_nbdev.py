@@ -26,13 +26,18 @@ index = {"getBag": "02_SyntheticData.ipynb",
          "getKLDMat": "04_Distribution_Distance_Approaches.ipynb",
          "getWassersteinMat": "04_Distribution_Distance_Approaches.ipynb",
          "AgglomerativeClustering": "06_Agglomerative_Clustering_KS_on_One_D_Scores.ipynb",
-         "WardClustering": "07_Ward_Clustering.ipynb"}
+         "WardClustering": "07_Ward_Clustering.ipynb",
+         "getAlphaLoss": "09_Autograd.ipynb",
+         "getWLoss": "09_Autograd.ipynb",
+         "getAlphaHat": "09_Autograd.ipynb",
+         "gradientMethod": "09_Autograd.ipynb"}
 
 modules = ["data/syntheticData.py",
            "utils.py",
            "distanceApproaches.py",
            "agglomerative_clustering.py",
-           "ward_clustering.py"]
+           "ward_clustering.py",
+           "gradientMethod.py"]
 
 doc_url = "https://Dzeiberg.github.io/multiinstance/"
 

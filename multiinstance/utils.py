@@ -21,7 +21,12 @@ from tqdm.notebook import tqdm
 import seaborn as sns
 
 # Cell
-estimator = getTrainedEstimator()
+import os
+if os.path.isdir("/ssdata/"):
+    pth = "/ssdata/ClassPriorEstimation/model.hdf5"
+else:
+    pth = "/data/dzeiberg/ClassPriorEstimation/model.hdf5"
+estimator = getTrainedEstimator(pth)
 
 # Cell
 def getBootstrapSample(p,u):
