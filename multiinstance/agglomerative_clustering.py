@@ -27,15 +27,18 @@ from tqdm.notebook import tqdm
 
 # Cell
 class AgglomerativeClustering:
-    def __init__(self, dsi, kstest_alpha):
+    def __init__(self, dsi, kstest_alpha,use_alphas_as_scores=True):
         self.clusterMembers = {i:[i] for i in range(dsi.N)}
         self.clusterAlphaHats = {i: dsi.alphaHats[i] for i in range(dsi.N)}
+        self.clusterCurves = {i: dsi.curves[i] for i in range(dsi.N)}
         self.ds = dsi
         self.log = []
+        self.deltas = []
         self.meanAbsErrs = []
         self.bagEstimateVariances = []
         self.kstest_alpha = kstest_alpha
         self.nummerges = 0
+        self.use_alphas_as_scores = use_alphas_as_scores
 
     def clusteringIteration(self):
         # track whether any new clusters are merged, indicating this new cluster might not have
@@ -50,11 +53,17 @@ class AgglomerativeClustering:
                 # merging candidates are other remaining clusters
                 candidates = list(set(self.clusterMembers.keys()) - {ci})
                 np.random.shuffle(candidates)
-                for cj in candidates:
-                    # get current one-dimensional scores for all unlabeled instances in all bags in this cluster
-                    scores_i = np.concatenate(tuple([getTransformScores(self.ds,b)[1] for b in self.clusterMembers[ci]]))
-                    # get scores for merge candidate cluster
-                    scores_j = np.concatenate([getTransformScores(self.ds,b)[1] for b in self.clusterMembers[cj]])
+                for cj in tqdm(candidates, leave=False, total=len(candidates),desc="candidates"):
+                    if self.use_alphas_as_scores:
+                        scores_i = self.clusterAlphaHats[ci]
+                        scores_j = self.clusterAlphaHats[cj]
+                    else:
+                        # get current one-dimensional scores for all unlabeled instances in all bags in this cluster
+                        scores_i = np.concatenate([getTransformScores(self.ds,
+                                                                            b)[1] for b in self.clusterMembers[ci]])
+                        # get scores for merge candidate cluster
+                        scores_j = np.concatenate([getTransformScores(self.ds,
+                                                                      b)[1] for b in self.clusterMembers[cj]])
                     # 2-sided kolmogrov-smirnov test (H0: samples from same distribution)
                     stat,p = ss.ks_2samp(scores_i.tolist(),scores_j.tolist())
                     # if you fail to reject, merge samples
@@ -63,41 +72,28 @@ class AgglomerativeClustering:
                         nextIterNeeded=True
                         # add this merge to the log
                         self.log.append((ci,cj, p))
+                        self.recordDelta(ci,cj)
                         # perform the actual merge
                         self.clusterMembers[ci] = self.clusterMembers[ci] + self.clusterMembers.pop(cj)
                         # track the within-bag class prior variance at each clustering iteration
                         self.doLogging()
+
         return nextIterNeeded
 
-    def alphaclusteringIteration(self):
-        # track whether any new clusters are merged, indicating this new cluster might not have
-        # been compared to other clusters and a new iteration is needed to do so
-        nextIterNeeded=False
-        clusters = list(self.clusterMembers.keys())
-        np.random.shuffle(clusters)
-        for ci in tqdm(clusters, leave=False, desc="clustering iteration"):
-            # might have to skip iteration if this cluster was merged elsewhere in a previous for loop iter
-            if ci in self.clusterMembers.keys():
-
-                # merging candidates are other remaining clusters
-                candidates = list(set(self.clusterMembers.keys()) - {ci})
-                np.random.shuffle(candidates)
-                for cj in tqdm(candidates,total=len(candidateses),desc="candidates",leave=False):
-                    # use the alpha hat estimates for each bag as the samples for the test
-                    scores_i = self.clusterAlphaHats[ci]
-                    scores_j = self.clusterAlphaHats[cj]
-                    # 2-sided kolmogrov-smirnov test (H0: samples from same distribution)
-                    stat,p = ss.ks_2samp(scores_i.tolist(),scores_j.tolist())
-                    # if you fail to reject, merge samples
-                    if p > self.kstest_alpha:
-                        nextIterNeeded=True
-                        # add this merge to the log
-                        self.log.append((ci,cj, p))
-                        # perform the actual merge
-                        self.clusterMembers[ci] = self.clusterMembers[ci] + self.clusterMembers.pop(cj)
-                        # track the within-bag class prior variance at each clustering iteration
-                        self.doLogging()
-        return nextIterNeeded
+    def recordDelta(self,ci,cj):
+        # record delta est,exp
+        alphaHatCI = np.mean(self.clusterAlphaHats[ci])
+        ni = np.sum([self.ds.numU[b] for b in self.clusterMembers[ci]])
+        alphaHatCJ = np.mean(self.clusterAlphaHats[cj])
+        nj = np.sum([self.ds.numU[b] for b in self.clusterMembers[cj]])
+        alphaTilde = (1 / (ni + nj)) * np.dot([ni,nj],[alphaHatCI, alphaHatCJ])
+        P, _ = list(zip(*[self.ds.getBag(int(i)) for i in range(self.ds.N)]))
+        _,U = list(zip(*[self.ds.getBag(b) for b in set(self.clusterMembers[ci]).union(self.clusterMembers[cj])]))
+        p = np.concatenate(P)
+        u = np.concatenate(U)
+        alphaHats, curves = getEsts(p,u,10)
+        clusterAlphaHat = np.mean(alphaHats)
+        self.deltas.append(np.abs(clusterAlphaHat - alphaTilde))
 
     def doLogging(self):
         absErrs = []
@@ -107,12 +103,14 @@ class AgglomerativeClustering:
         for bagNum,bags in self.clusterMembers.items():
             # Get cluster estimate
             if len(bags) > 1:
-                P,U = list(zip(*[self.ds.getBag(b) for b in bags]))
+                P, _ = list(zip(*[self.ds.getBag(int(i)) for i in range(self.ds.N)]))
+                _,U = list(zip(*[self.ds.getBag(b) for b in bags]))
                 p = np.concatenate(P)
                 u = np.concatenate(U)
-                alphaHats, _ = getEsts(p,u,10)
+                alphaHats, curves = getEsts(p,u,10)
                 clusterAlphaHat = np.mean(alphaHats)
                 self.clusterAlphaHats[bagNum] = alphaHats
+                self.clusterCurves[bagNum] = curves
                 clusterAlphas = self.ds.trueAlphas[bags].flatten()
             else:
                 clusterAlphaHat = self.ds.alphaHats[bags].mean(1)
@@ -123,6 +121,8 @@ class AgglomerativeClustering:
             # log abs. err for this cluster
             # add to calculation for variance in estimates for this cluster
             bagEstVar += np.sum((bagsAlphaHat - clusterAlphaHat)**2)
+
+
         self.meanAbsErrs.append(np.mean(np.concatenate(absErrs)))
         self.bagEstimateVariances.append(bagEstVar / (self.ds.N - 1))
 

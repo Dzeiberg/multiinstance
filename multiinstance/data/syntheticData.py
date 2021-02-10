@@ -14,8 +14,8 @@ def getBag(nP=None, nU=None,posMean=None, negMean=None,cov=None,
     if nU is None:
         nU = np.random.poisson(30) + 1
     alpha = alphaDistr()
-    numUnlabeledPos = int(alpha * nU)
-    numUnlabeledNeg = nU - numUnlabeledPos
+    numUnlabeledPos = max(1,int(alpha * nU))
+    numUnlabeledNeg = max(1,nU - numUnlabeledPos)
     # Sample Positive Points
     oneD = type(posMean) in [int, float]
     if oneD:
