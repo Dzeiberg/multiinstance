@@ -86,7 +86,8 @@ class WardClustering:
             self.doLogging(c_iter)
 
     def getClusterEst(self,bagIdxs):
-        P,U = list(zip(*[self.ds.getBag(b) for b in bagIdxs]))
+        _,U = list(zip(*[self.ds.getBag(b) for b in bagIdxs]))
+        P, _ = list(zip(*[self.ds.getBag(int(i)) for i in range(self.ds.N)]))
         p = np.concatenate(P)
         u = np.concatenate(U)
         alphaHats, _ = getEsts(p,u,10)
