@@ -15,8 +15,10 @@ from .dataset_utils import buildDataset
 from .utils import *
 from .distanceApproaches import *
 from .agglomerative_clustering import AgglomerativeClustering
+from numba import set_num_threads
 
 # Cell
+
 def getAlphaLoss(w,n, alphaHats):
     def loss(alpha):
         lossVal = 0
@@ -45,17 +47,16 @@ def getAlphaHat(dsi,reps=10):
 
 
 # Cell
-def gradientMethod(dsi):
-    alphaHats = getAlphaHat(dsi,50)
+def gradientMethod(dsi, n_epochs=100):
+    alphaHats = dsi.globalAlphaHats
     # initialize values for gradient method
     a = dsi.alphaHats.mean(1)
     n = dsi.numU
     w = np.random.uniform(low=0.01,high=1,size=(len(alphaHats),
                                                 n.shape[0]))
     maes = [np.mean(np.abs(a - dsi.trueAlphas.flatten()))]
-    epochs = 100
     # Run gradient method
-    for i in tqdm(range(epochs),total=epochs):
+    for i in tqdm(range(n_epochs),total=n_epochs):
         alphaLossFn = getAlphaLoss(w,n,alphaHats)
         alphaGrad = grad(alphaLossFn)
         a = a - .025 * alphaGrad(a)

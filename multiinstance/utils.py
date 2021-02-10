@@ -39,7 +39,8 @@ def getBootstrapSample(p,u):
 def getEsts(p,u, numbootstraps):
     curves = np.zeros((numbootstraps, 100))
     alphaHats = np.zeros(numbootstraps)
-    for i in range(numbootstraps):
+    for i in tqdm(range(numbootstraps),total=numbootstraps,
+                  desc="getting distCurve Estimates",leave=False):
         ps, us = getBootstrapSample(p,u)
         curve = makeCurve(ps,us).reshape((1,-1))
         curves[i] = curve

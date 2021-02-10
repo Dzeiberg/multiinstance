@@ -19,7 +19,7 @@ def getBag(nP=None, nU=None,posMean=None, negMean=None,cov=None,
     # Sample Positive Points
     oneD = type(posMean) in [int, float]
     if oneD:
-        ptsPos = np.random.normal(posMean,cov,size=nP)
+        ptsPos = np.random.normal(posMean,cov,size=nP).reshape((-1,1))
         ptsUnlabeled = np.concatenate([
                 np.random.normal(posMean,
                                  cov,
@@ -27,7 +27,7 @@ def getBag(nP=None, nU=None,posMean=None, negMean=None,cov=None,
                 np.random.normal(negMean,
                                  cov,
                                  size=numUnlabeledNeg)
-            ],axis=0)
+            ],axis=0).reshape((-1,1))
     else:
         ptsPos = np.random.multivariate_normal(posMean, cov,size=nP)
         ptsUnlabeled = np.concatenate([
