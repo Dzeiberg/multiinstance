@@ -4,8 +4,8 @@ __all__ = ["index", "modules", "custom_doc_links", "git_url"]
 
 index = {"getBag": "02_SyntheticData.ipynb",
          "buildDatasetDict": "02_SyntheticData.ipynb",
-         "Dataset": "02_SyntheticData.ipynb",
-         "buildDataset": "02_SyntheticData.ipynb",
+         "Dataset": "11_Construct_Datasets.ipynb",
+         "buildDataset": "11_Construct_Datasets.ipynb",
          "estimator": "03_Dataset_Utils.ipynb",
          "getBootstrapSample": "03_Dataset_Utils.ipynb",
          "getEsts": "03_Dataset_Utils.ipynb",
@@ -27,17 +27,21 @@ index = {"getBag": "02_SyntheticData.ipynb",
          "getWassersteinMat": "04_Distribution_Distance_Approaches.ipynb",
          "AgglomerativeClustering": "06_Agglomerative_Clustering_KS_on_One_D_Scores.ipynb",
          "WardClustering": "07_Ward_Clustering.ipynb",
-         "getAlphaLoss": "09_Autograd.ipynb",
-         "getWLoss": "09_Autograd.ipynb",
-         "getAlphaHat": "09_Autograd.ipynb",
-         "gradientMethod": "09_Autograd.ipynb"}
+         "getAlphaHat": "10_Gradient_With_Likelihood.ipynb",
+         "getAlphaLoss": "10_Gradient_With_Likelihood.ipynb",
+         "getWLoss": "10_Gradient_With_Likelihood.ipynb",
+         "gradientMethod": "09_Gradient_Method.ipynb",
+         "getAlphaLossWithLL": "10_Gradient_With_Likelihood.ipynb",
+         "getParams": "11_Construct_Datasets.ipynb",
+         "getBagDict": "11_Construct_Datasets.ipynb"}
 
 modules = ["data/syntheticData.py",
            "utils.py",
            "distanceApproaches.py",
            "agglomerative_clustering.py",
            "ward_clustering.py",
-           "gradientMethod.py"]
+           "gradientMethod.py",
+           "data/realData.py"]
 
 doc_url = "https://Dzeiberg.github.io/multiinstance/"
 
