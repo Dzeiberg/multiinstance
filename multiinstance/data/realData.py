@@ -8,6 +8,7 @@ import numpy as np
 import mat73
 
 from scipy.io import loadmat
+import h5py
 
 # Cell
 def getParams(nPDistr=lambda: np.random.poisson(25) + 1,
@@ -66,12 +67,16 @@ class Dataset:
         return self.N
 
 # Cell
-def buildDataset(ds, size,
+def buildDataset(dsPath, size,
                  nPDistr=lambda: np.random.poisson(25) + 1,
                  nUDistr=lambda: np.random.poisson(30) + 1,
                  alphaDistr=lambda: np.random.beta(2,10)):
-    if type(ds) == str:
-        ds = loadmat(ds)
+    try:
+        ds = loadmat(dsPath)
+    except:
+        ds= {}
+        for k,v in h5py.File(dsPath,"r").items():
+            ds[k] = np.array(v)
     bags = []
     for bag in range(size):
         nP, nU, alpha, numUnlabeledPos, numUnlabeledNeg = getParams(nPDistr=nPDistr,

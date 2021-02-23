@@ -109,6 +109,42 @@ class Dataset:
         u = self.unlabeledInstances[idx, :self.numU[idx]]
         return p,u
 
+    def merge(self,ds2):
+        # fix padding for positives
+        d1=self.positiveInstances.shape[1]
+        d2 = ds2.positiveInstances.shape[1]
+        pad1 = max(d2,d1) - d1
+        pad2 = max(d2,d1) - d2
+        p1 = np.concatenate((self.positiveInstances,
+                             np.zeros((self.positiveInstances.shape[0], pad1,self.positiveInstances.shape[2]))),
+                           axis=1)
+        p2 = np.concatenate((ds2.positiveInstances,
+                             np.zeros((ds2.positiveInstances.shape[0], pad2, ds2.positiveInstances.shape[2]))),
+                           axis=1)
+        self.positiveInstances = np.concatenate((p1,p2))
+        d1=self.unlabeledInstances.shape[1]
+        d2 = ds2.unlabeledInstances.shape[1]
+        pad1 = max(d2,d1) - d1
+        pad2 = max(d2,d1) - d2
+        u1 = np.concatenate((self.unlabeledInstances,
+                             np.zeros((self.unlabeledInstances.shape[0], pad1,self.unlabeledInstances.shape[2]))),
+                           axis=1)
+        u2 = np.concatenate((ds2.unlabeledInstances,
+                             np.zeros((ds2.unlabeledInstances.shape[0], pad2, ds2.unlabeledInstances.shape[2]))),
+                           axis=1)
+        self.unlabeledInstances = np.concatenate((u1,u2))
+        self.N += ds2.N
+        self.numP = np.concatenate((self.numP,ds2.numP))
+        self.numU = np.concatenate((self.numU,ds2.numU))
+        self.posDistMean = np.concatenate((np.array([self.posDistMean]),
+                                           np.array([ds2.posDistMean])))
+
+        self.negDistMean = np.concatenate((np.array([self.negDistMean]),
+                                           np.array([ds2.negDistMean])))
+        self.cov = np.concatenate((np.array([self.cov]),
+                                   np.array([ds2.cov])))
+        self.trueAlphas = np.concatenate((self.trueAlphas, ds2.trueAlphas))
+
 # Cell
 def buildDataset(size,nP=None,nU=None,posMean=None, negMean=None,cov=None,alphaDistr=lambda: np.random.beta(2,10)):
     ddict = buildDatasetDict(size,nP=nP, nU=nU, posMean=posMean, negMean=negMean, cov=cov, alphaDistr=alphaDistr)
