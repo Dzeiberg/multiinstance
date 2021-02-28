@@ -44,7 +44,10 @@ index = {"getBag": "02_SyntheticData.ipynb",
          "wL0": "12_Gradient_With_Size_Penalty.ipynb",
          "g1": "12_Gradient_With_Size_Penalty.ipynb",
          "plotResults": "12_Gradient_With_Size_Penalty.ipynb",
-         "initRealDS": "12_Gradient_With_Size_Penalty.ipynb"}
+         "initRealDS": "12_Gradient_With_Size_Penalty.ipynb",
+         "normalizedlogLik": "16_Likelihood_Method.ipynb",
+         "getChildren": "16_Likelihood_Method.ipynb",
+         "treeNegativeLogLikelihood": "16_Likelihood_Method.ipynb"}
 
 modules = ["data/syntheticData.py",
            "utils.py",
@@ -52,7 +55,8 @@ modules = ["data/syntheticData.py",
            "agglomerative_clustering.py",
            "ward_clustering.py",
            "gradientMethod.py",
-           "data/realData.py"]
+           "data/realData.py",
+           "likelihoodMethods.py"]
 
 doc_url = "https://Dzeiberg.github.io/multiinstance/"
 
