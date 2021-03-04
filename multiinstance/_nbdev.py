@@ -45,7 +45,7 @@ index = {"getBag": "02_SyntheticData.ipynb",
          "g1": "12_Gradient_With_Size_Penalty.ipynb",
          "plotResults": "12_Gradient_With_Size_Penalty.ipynb",
          "initRealDS": "12_Gradient_With_Size_Penalty.ipynb",
-         "normalizedlogLik": "16_Likelihood_Method.ipynb",
+         "logLikelihood": "16_Likelihood_Method.ipynb",
          "getChildren": "16_Likelihood_Method.ipynb",
          "treeNegativeLogLikelihood": "16_Likelihood_Method.ipynb"}
 
