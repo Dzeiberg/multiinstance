@@ -2,7 +2,7 @@
 
 __all__ = ['estimator', 'addTransformScores', 'splitIntoBags', 'getTransformScores', 'getBootstrapSample', 'estimate',
            'getEsts', 'getBagAlphaHats', 'getCliqueAlphaHats', 'getAlphaPrime', 'addGlobalEsts', 'addBagAlphaHats',
-           'getKSMatrixPMatrix', 'getAllCliques', 'clusterByLeidenAlg', 'getOptimalAdjacency']
+           'eng', 'path', 'getKSMatrixPMatrix', 'getAllCliques', 'clusterByLeidenAlg', 'getOptimalAdjacency']
 
 # Cell
 from .data.syntheticData import buildDataset
@@ -75,6 +75,10 @@ def getTransformScores(ds,i):
     return p,u
 
 # Cell
+import matlab.engine
+eng = matlab.engine.start_matlab()
+path = eng.addpath("/home/dzeiberg/alphamax//alphamax/")
+
 def getBootstrapSample(p,u):
     ps = np.random.choice(np.arange(p.shape[0]), size=len(p), replace=True)
     ps = p[ps]
@@ -82,30 +86,38 @@ def getBootstrapSample(p,u):
     us = u[us]
     return ps, us
 
-def estimate(ps,us):
-    curve = makeCurve(ps,us).reshape((1,-1))
-    assert curve.sum() > 0
-    curve /= curve.sum()
-    est = estimator(curve)
+def estimate(ps,us, useAlphaMax=False):
+    if useAlphaMax:
+        est = eng.runAlphaMax(matlab.double(us.tolist()),
+                        matlab.double(ps.tolist()),
+                        'transform','none')
+        curve = np.zeros(100)
+    else:
+        curve = makeCurve(ps,us).reshape((1,-1))
+        assert curve.sum() > 0
+        curve /= curve.sum()
+        est = estimator(curve)
     return est,curve
 
-def getEsts(p,u, numbootstraps):
+def getEsts(p,u, numbootstraps=10, useAlphaMax=False):
     curves = np.zeros((numbootstraps, 100))
     alphaHats = np.zeros(numbootstraps)
     for i in tqdm(range(numbootstraps),total=numbootstraps,
                   desc="getting distCurve Estimates",leave=False):
         ps, us = getBootstrapSample(p,u)
-        alphaHats[i],curves[i] = estimate(ps,us)
+        alphaHats[i],curves[i] = estimate(ps,us,useAlphaMax=useAlphaMax)
     return alphaHats, curves
 
-def getBagAlphaHats(ds, numbootstraps=100):
+def getBagAlphaHats(ds, numbootstraps=100,useAlphaMax=False):
     alphaHats =np.zeros((ds.N, numbootstraps))
     curves =np.zeros((ds.N, numbootstraps, 100))
-    ps, _ = list(zip(*[ds.getBag(int(i)) for i in range(ds.N)]))
-    p = np.concatenate(ps)
+#     ps, _ = list(zip(*[ds.getBag(int(i)) for i in range(ds.N)]))
+    ps,_ = list(zip(*[getTransformScores(ds,i) for i in range(ds.N)]))
+    p = np.concatenate(ps).reshape((-1,1))
     for bagIdx in tqdm(range(ds.N), total=ds.N, desc="getting bag estimates",leave=False):
-        _,u = ds.getBag(bagIdx)
-        alphaHats[bagIdx], curves[bagIdx] = getEsts(p,u, numbootstraps)
+        _,u = getTransformScores(ds,bagIdx)
+        u = u.reshape((-1,1))
+        alphaHats[bagIdx], curves[bagIdx] = getEsts(p,u, numbootstraps,useAlphaMax=useAlphaMax)
     return alphaHats, curves
 
 
@@ -129,18 +141,18 @@ def getAlphaPrime(cliques, cliqueEsts):
         alphaPrime[bn] = cliqueEsts[inClique].mean()
     return alphaPrime
 
-def addGlobalEsts(dsi,reps=10):
+def addGlobalEsts(dsi,reps=10, useAlphaMax=False):
     alphaHats = np.zeros(reps)
     for rep in tqdm(range(reps),total=reps,desc="getting global estimates",leave=False):
         P, U = list(zip(*[getBootstrapSample(*getTransformScores(dsi,i)) for i in range(dsi.N)]))
         p = np.concatenate(P).reshape((-1,1))
         u = np.concatenate(U).reshape((-1,1))
-        alphaHats[rep],_ = estimate(p,u)
+        alphaHats[rep],_ = estimate(p,u,useAlphaMax=useAlphaMax)
     dsi.globalAlphaHats = alphaHats
     return dsi
 
-def addBagAlphaHats(dsi,reps=10):
-    alphaHats,curves = getBagAlphaHats(dsi,numbootstraps=reps)
+def addBagAlphaHats(dsi,reps=10,useAlphaMax=False):
+    alphaHats,curves = getBagAlphaHats(dsi,numbootstraps=reps,useAlphaMax=useAlphaMax)
     dsi.alphaHats = alphaHats
     return dsi
 

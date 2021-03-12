@@ -18,6 +18,8 @@ index = {"getBag": "02_SyntheticData.ipynb",
          "getAlphaPrime": "03_Dataset_Utils.ipynb",
          "addGlobalEsts": "03_Dataset_Utils.ipynb",
          "addBagAlphaHats": "03_Dataset_Utils.ipynb",
+         "eng": "03_Dataset_Utils.ipynb",
+         "path": "03_Dataset_Utils.ipynb",
          "getKSMatrixPMatrix": "03_Dataset_Utils.ipynb",
          "getAllCliques": "03_Dataset_Utils.ipynb",
          "clusterByLeidenAlg": "03_Dataset_Utils.ipynb",
@@ -45,9 +47,13 @@ index = {"getBag": "02_SyntheticData.ipynb",
          "g1": "12_Gradient_With_Size_Penalty.ipynb",
          "plotResults": "12_Gradient_With_Size_Penalty.ipynb",
          "initRealDS": "12_Gradient_With_Size_Penalty.ipynb",
-         "logLikelihood": "16_Likelihood_Method.ipynb",
-         "getChildren": "16_Likelihood_Method.ipynb",
-         "treeNegativeLogLikelihood": "16_Likelihood_Method.ipynb"}
+         "logLikelihood": "22_Quarantine_DistCurve.ipynb",
+         "getChildren": "22_Quarantine_DistCurve.ipynb",
+         "treeNegativeLogLikelihood": "22_Quarantine_DistCurve.ipynb",
+         "runAlgorithm": "22_Quarantine_DistCurve.ipynb",
+         "plotMAE": "22_Quarantine_DistCurve.ipynb",
+         "plotDistrs": "22_Quarantine_DistCurve.ipynb",
+         "prepDS": "24_Likelihood_Cleaned.ipynb"}
 
 modules = ["data/syntheticData.py",
            "utils.py",
@@ -56,7 +62,8 @@ modules = ["data/syntheticData.py",
            "ward_clustering.py",
            "gradientMethod.py",
            "data/realData.py",
-           "likelihoodMethods.py"]
+           "likelihoodMethods.py",
+           "likelihood_method.py"]
 
 doc_url = "https://Dzeiberg.github.io/multiinstance/"
 
