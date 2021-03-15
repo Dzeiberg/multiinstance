@@ -2,7 +2,7 @@
 
 __all__ = ['estimator', 'addTransformScores', 'splitIntoBags', 'getTransformScores', 'getBootstrapSample', 'estimate',
            'getEsts', 'getBagAlphaHats', 'getCliqueAlphaHats', 'getAlphaPrime', 'addGlobalEsts', 'addBagAlphaHats',
-           'eng', 'path', 'getKSMatrixPMatrix', 'getAllCliques', 'clusterByLeidenAlg', 'getOptimalAdjacency']
+           'eng', 'path', 'path', 'getKSMatrixPMatrix', 'getAllCliques', 'clusterByLeidenAlg', 'getOptimalAdjacency']
 
 # Cell
 from .data.syntheticData import buildDataset
@@ -29,8 +29,11 @@ from sklearn.metrics import roc_auc_score
 import os
 if os.path.isdir("/ssdata/"):
     pth = "/home/dz/research/ClassPriorEstimation/model.hdf5"
+    alphaMaxEstimatorPath = "/home/dz/research/alphamax2/alphamax/estimators/alphamaxEstimator.mat"
+
 else:
     pth = "/data/dzeiberg/ClassPriorEstimation/model.hdf5"
+    alphaMaxEstimatorPath = "/home/dzeiberg/alphamax/alphamax/estimators/alphamaxEstimator.mat"
 estimator = getTrainedEstimator(pth)
 
 # Cell
@@ -78,6 +81,7 @@ def getTransformScores(ds,i):
 import matlab.engine
 eng = matlab.engine.start_matlab()
 path = eng.addpath("/home/dzeiberg/alphamax//alphamax/")
+path = eng.addpath("/home/dz/research/alphamax2/alphamax/")
 
 def getBootstrapSample(p,u):
     ps = np.random.choice(np.arange(p.shape[0]), size=len(p), replace=True)
@@ -89,8 +93,9 @@ def getBootstrapSample(p,u):
 def estimate(ps,us, useAlphaMax=False):
     if useAlphaMax:
         est = eng.runAlphaMax(matlab.double(us.tolist()),
-                        matlab.double(ps.tolist()),
-                        'transform','none')
+                              matlab.double(ps.tolist()),
+                              'transform','none',
+                              'estimator',alphaMaxEstimatorPath)
         curve = np.zeros(100)
     else:
         curve = makeCurve(ps,us).reshape((1,-1))
