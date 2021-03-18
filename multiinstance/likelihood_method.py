@@ -156,10 +156,11 @@ def prepDS(dsi,numbootstraps=10, useAlphaMax=True):
     dsi.numLeaves = dsi.alphaHats.shape[0]
     dsi.numNodes = dsi.numLeaves + (dsi.numLeaves - 1)
     dsi.numInternal = dsi.numNodes - dsi.numLeaves
-
+    NEstimates = dsi.alphaHats.shape[1]
     dsi.mu = np.zeros(dsi.alphaHats.shape[0])
     dsi.sigma = np.ones(dsi.numNodes)
-    dsi.leafN = np.ones_like(dsi.mu) * dsi.alphaHats.shape[1]
+#     dsi.leafN = np.ones_like(dsi.mu) * dsi.alphaHats.shape[1]
+    dsi.leafN = dsi.numU
     dsi.treeAlphaHats = [[] for _ in range(dsi.numNodes)]
 
     for nodeNum in range(dsi.numInternal):
@@ -169,7 +170,8 @@ def prepDS(dsi,numbootstraps=10, useAlphaMax=True):
         pos,_ = list(zip(*[getTransformScores(dsi,n) for n in range(dsi.N)]))
         pos = np.concatenate(pos).reshape((-1,1))
         unlabeled = np.concatenate(unlabeled).reshape((-1,1))
-        NEstimates = int(np.sum([dsi.leafN[l] for l in leafNums]))
+#         NEstimates = int(np.sum([numEstimates[l] for l in leafNums]))
+
         dsi.treeAlphaHats[nodeNum],_ = getEsts(pos, unlabeled, NEstimates,useAlphaMax=useAlphaMax)
         _, dsi.sigma[nodeNum] = ss.norm.fit(dsi.treeAlphaHats[nodeNum])
 
