@@ -21,10 +21,15 @@ from numba import set_num_threads
 
 # Cell
 class WardClustering:
-    def __init__(self, dsi):
+    def __init__(self, dsi,numbootstraps=10,randomPairing=False):
+        self.randomPairing = randomPairing
+        self.numbootstraps = numbootstraps
         self.clusterAssignment = np.zeros((dsi.N, dsi.N))
         self.clusterAssignment[0] = np.arange(dsi.N)
         self.clusterAlphaHats = {i: dsi.alphaHats[i] for i in range(dsi.N)}
+        self.alphaHatMat = np.ones((dsi.N, dsi.N, numbootstraps)) * np.nan
+        for i in range(dsi.N):
+            self.alphaHatMat[0,i] = dsi.alphaHats[i]
         self.ds = dsi
         self.meanAbsErrs = np.zeros(dsi.N)
         self.deltas = np.zeros(dsi.N - 1)
@@ -38,8 +43,8 @@ class WardClustering:
 #         print(self.clusterAssignment)
         for ci in clusters:
             bags = np.where(self.clusterAssignment[c_iter] == ci)[0]
-#             print(bags)
-            aHat = self.clusterAlphaHats[ci].mean()
+#             print(c_iter, ci)
+            aHat = self.alphaHatMat[int(c_iter), int(ci)].mean()
             alphas = self.ds.trueAlphas[bags].flatten()
             # log abs. err for this cluster
             aes = np.abs(alphas - aHat)
@@ -49,29 +54,41 @@ class WardClustering:
 
     def cluster(self):
         for c_iter in tqdm(range(1, self.ds.N),desc="clustering iter",total=self.ds.N-1):
-            clusters = np.unique(self.clusterAssignment[c_iter - 1])
+            clusters = np.unique(self.clusterAssignment[c_iter - 1]).astype(int)
             Nc = len(clusters)
-            deltas = np.ones((Nc, Nc))
-            alphaHats_Merged_Clusters = np.zeros((Nc,Nc, 10))
-            for i, ci in tqdm(enumerate(clusters), desc="ci", total=Nc, leave=False):
-                alphaHat_ci = self.clusterAlphaHats[ci]
-                var_ci = np.sum((alphaHat_ci - alphaHat_ci.mean())**2)
-                for j, cj in enumerate(set(clusters)):
-                    if i != j:
-                        alphaHat_cj = self.clusterAlphaHats[cj]
-                        var_cj = np.sum((alphaHat_cj - alphaHat_cj.mean())**2)
-                        # alpha hats from i or j
-                        alphaHats = np.concatenate((alphaHat_ci,
-                                                       alphaHat_cj))
-                        # Get alphaHat for joint cluster
-                        bagIdxs = np.where(np.isin(self.clusterAssignment[c_iter - 1],[ci,cj]))[0]
-                        alphaHat_cij = self.getClusterEst(bagIdxs)
-                        alphaHats_Merged_Clusters[i,j] = alphaHat_cij
-                        var_cij = np.sum((alphaHats - alphaHat_cij.mean())**2)
-                        deltas[i,j]= var_cij - var_ci - var_cj
-            # find indices of bags to merge
-            idx = np.argmin(deltas)
-            i,j = int(idx / deltas.shape[0]), idx % deltas.shape[0]
+            deltas = np.ones((Nc, Nc)) * np.inf
+            alphaHats_Merged_Clusters = np.zeros((Nc,Nc, self.numbootstraps))
+            if not self.randomPairing:
+                for i, ci in tqdm(enumerate(clusters), desc="ci", total=Nc, leave=False):
+                    alphaHat_ci = self.alphaHatMat[c_iter - 1,ci]
+                    var_ci = np.sum((alphaHat_ci - alphaHat_ci.mean())**2)
+                    for j, cj in enumerate(set(clusters)):
+                        if i != j:
+                            alphaHat_cj = self.alphaHatMat[c_iter-1, cj]
+                            var_cj = np.sum((alphaHat_cj - alphaHat_cj.mean())**2)
+                            # alpha hats from i or j
+                            alphaHats = np.concatenate((alphaHat_ci,
+                                                           alphaHat_cj))
+                            # Get alphaHat for joint cluster
+                            bagIdxs = np.where(np.isin(self.clusterAssignment[c_iter - 1],[ci,cj]))[0]
+                            alphaHat_cij = self.getClusterEst(bagIdxs)
+                            alphaHats_Merged_Clusters[i,j] = alphaHat_cij
+                            var_cij = np.sum((alphaHats - alphaHat_cij.mean())**2)
+                            deltas[i,j]= var_cij - var_ci - var_cj
+                # find indices of bags to merge
+                idx = np.argmin(deltas)
+                i,j = int(idx / deltas.shape[0]), idx % deltas.shape[0]
+            else:
+                i = np.random.choice(np.arange(deltas.shape[0]))
+                j = np.random.choice(list(set(np.arange(deltas.shape[0])) - set([i])))
+                ci = clusters[i]
+                cj = clusters[j]
+                bagIdxs = np.where(np.isin(self.clusterAssignment[c_iter - 1],[ci,cj]))[0]
+                alphaHat_cij = self.getClusterEst(bagIdxs)
+                alphaHats_Merged_Clusters[i,j] = alphaHat_cij
+
+
+
             ci, cj = clusters[i], clusters[j]
 #             print(deltas)
             self.log.append((ci,cj))
@@ -79,16 +96,19 @@ class WardClustering:
             self.deltas[c_iter - 1] = deltas[i,j]
             # set cluster assignment after this merge
             self.clusterAssignment[c_iter] = self.clusterAssignment[c_iter - 1]
+            inI = np.where(self.clusterAssignment[c_iter] == ci)[0]
             inJ = np.where(self.clusterAssignment[c_iter] == cj)[0]
             self.clusterAssignment[c_iter, inJ] = ci
             # update the alphaHat to that estimated from the newly formed cluster
-            self.clusterAlphaHats[ci] = alphaHats_Merged_Clusters[i,j]
+#             self.clusterAlphaHats[ci] = alphaHats_Merged_Clusters[i,j]
+            self.alphaHatMat[c_iter] = self.alphaHatMat[c_iter - 1]
+            self.alphaHatMat[c_iter, list(set(inI).union(set(inJ)))] = alphaHats_Merged_Clusters[i,j]
             self.doLogging(c_iter)
 
     def getClusterEst(self,bagIdxs):
-        _,U = list(zip(*[self.ds.getBag(b) for b in bagIdxs]))
-        P, _ = list(zip(*[self.ds.getBag(int(i)) for i in range(self.ds.N)]))
-        p = np.concatenate(P)
-        u = np.concatenate(U)
-        alphaHats, _ = getEsts(p,u,10)
+        _,U = list(zip(*[getTransformScores(self.ds,b) for b in bagIdxs]))
+        P, _ = list(zip(*[getTransformScores(self.ds,int(i)) for i in range(self.ds.N)]))
+        p = np.concatenate(P).reshape((-1,1))
+        u = np.concatenate(U).reshape((-1,1))
+        alphaHats, _ = getEsts(p,u,self.numbootstraps)
         return alphaHats
