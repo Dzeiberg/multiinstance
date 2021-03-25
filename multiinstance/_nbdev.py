@@ -54,7 +54,8 @@ index = {"getBag": "02_SyntheticData.ipynb",
          "plotMAE": "22_Quarantine_DistCurve.ipynb",
          "plotDistrs": "22_Quarantine_DistCurve.ipynb",
          "prepDS": "24_Likelihood_Cleaned.ipynb",
-         "LikelihoodMethod": "25_Likelihood_With_Ward.ipynb"}
+         "LikelihoodMethod": "25_Likelihood_With_Ward.ipynb",
+         "getSequence": "27_Read_Varibench.ipynb"}
 
 modules = ["data/syntheticData.py",
            "utils.py",
@@ -65,7 +66,8 @@ modules = ["data/syntheticData.py",
            "data/realData.py",
            "likelihoodMethods.py",
            "likelihood_method.py",
-           "tree_likelihood.py"]
+           "tree_likelihood.py",
+           "data/gene.py"]
 
 doc_url = "https://Dzeiberg.github.io/multiinstance/"
 
