@@ -4,7 +4,7 @@ __all__ = ['WardClustering']
 
 # Cell
 from .utils import *
-from .distanceApproaches import *
+# from multiinstance.distanceApproaches import *
 from .data.syntheticData import buildDataset,getBag
 
 import seaborn as sns
