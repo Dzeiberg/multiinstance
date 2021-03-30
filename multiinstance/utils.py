@@ -30,7 +30,9 @@ import os
 if os.path.isdir("/ssdata/"):
     pth = "/home/dz/research/ClassPriorEstimation/model.hdf5"
     alphaMaxEstimatorPath = "/home/dz/research/alphamax2/alphamax/estimators/alphamaxEstimator.mat"
-
+elif os.path.isdir("/Users/dan/Documents/"):
+    pth = "/Users/dan/Documents/research/ClassPriorEstimation/model.hdf5"
+    alphaMaxEstimatorPath = "/Users/dan/Documents/research/AlphaMax/alphamax/estimators/alphamaxEstimator.mat"
 else:
     pth = "/data/dzeiberg/ClassPriorEstimation/model.hdf5"
     alphaMaxEstimatorPath = "/home/dzeiberg/alphamax/alphamax/estimators/alphamaxEstimator.mat"
