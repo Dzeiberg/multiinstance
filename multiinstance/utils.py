@@ -115,18 +115,30 @@ def getEsts(p,u, numbootstraps=10, useAlphaMax=False):
         alphaHats[i],curves[i] = estimate(ps,us,useAlphaMax=useAlphaMax)
     return alphaHats, curves
 
-def getBagAlphaHats(ds, numbootstraps=100,useAlphaMax=False):
-    alphaHats =np.zeros((ds.N, numbootstraps))
-    curves =np.zeros((ds.N, numbootstraps, 100))
-#     ps, _ = list(zip(*[ds.getBag(int(i)) for i in range(ds.N)]))
-    ps,_ = list(zip(*[getTransformScores(ds,i) for i in range(ds.N)]))
-    p = np.concatenate(ps).reshape((-1,1))
-    for bagIdx in tqdm(range(ds.N), total=ds.N, desc="getting bag estimates",leave=False):
-        _,u = getTransformScores(ds,bagIdx)
-        u = u.reshape((-1,1))
-        alphaHats[bagIdx], curves[bagIdx] = getEsts(p,u, numbootstraps,useAlphaMax=useAlphaMax)
-    return alphaHats, curves
+# def getBagAlphaHats(ds, numbootstraps=100,useAlphaMax=False):
+#     alphaHats =np.zeros((ds.N, numbootstraps))
+#     curves =np.zeros((ds.N, numbootstraps, 100))
+# #     ps, _ = list(zip(*[ds.getBag(int(i)) for i in range(ds.N)]))
+#     ps,_ = list(zip(*[getTransformScores(ds,i) for i in range(ds.N)]))
+#     p = np.concatenate(ps).reshape((-1,1))
+#     for bagIdx in tqdm(range(ds.N), total=ds.N, desc="getting bag estimates",leave=False):
+#         _,u = getTransformScores(ds,bagIdx)
+#         u = u.reshape((-1,1))
+#         alphaHats[bagIdx], curves[bagIdx] = getEsts(p,u, numbootstraps,useAlphaMax=useAlphaMax)
+#     return alphaHats, curves
 
+def getBagAlphaHats(ds, numbootstraps=100, useAlphaMax=False):
+    alphaHats = np.zeros((ds.N, numbootstraps))
+    curves =np.zeros((ds.N, numbootstraps, 100))
+    for bagIdx in tqdm(range(ds.N),total=ds.N, desc="getting bag estimates",leave=False):
+        for rep in range(numbootstraps):
+            P, U = list(zip(*[getBootstrapSample(*getTransformScores(ds,i)) for i in range(ds.N)]))
+            p = np.concatenate(P).reshape((-1,1))
+            _, u = getTransformScores(ds,bagIdx)
+            u = u.reshape((-1,1))
+            u = u[np.random.choice(np.arange(u.shape[0]), size=len(u), replace=True)]
+            alphaHats[bagIdx, rep], curves[bagIdx,rep] = estimate(p,u,useAlphaMax=useAlphaMax)
+    return alphaHats, curves
 
 def getCliqueAlphaHats(ds, cliques, numbootstraps=10):
     Nc = len(cliques)

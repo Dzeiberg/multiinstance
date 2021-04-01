@@ -53,7 +53,7 @@ class WardClustering:
 #         print("MAE after ",c_iter," merges: ",self.meanAbsErrs)
 
     def cluster(self):
-        for c_iter in tqdm(range(1, self.ds.N),desc="clustering iter",total=self.ds.N-1):
+        for c_iter in tqdm(range(1, self.ds.N),desc="clustering iter",total=self.ds.N-1, leave=False):
             clusters = np.unique(self.clusterAssignment[c_iter - 1]).astype(int)
             Nc = len(clusters)
             deltas = np.ones((Nc, Nc)) * np.inf
