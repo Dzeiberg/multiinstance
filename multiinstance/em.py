@@ -13,6 +13,9 @@ from sklearn.metrics import roc_auc_score,adjusted_mutual_info_score, adjusted_r
 from tqdm.notebook import tqdm
 
 # Cell
+
+
+# export
 def KMeansInit(X, k):
     means = [X[np.random.choice(np.arange(X.shape[0]))]]
     for iteration in range(k-1):
@@ -163,7 +166,7 @@ def generateBags(NBags,
             ni = np.round(n_unlabeled_pos * w).astype(int)
             xunlabeled.append(comp(ni))
             unlabeled_pos_componenet_labels.append(np.ones(ni) * i)
-        bag.unlabeled_pos_componenet_labels = unlabeled_pos_componenet_labels
+        bag.unlabeled_pos_componenet_labels = np.concatenate(unlabeled_pos_componenet_labels)
         unlabeled_neg_weights = np.random.dirichlet(np.ones(len(neg_components)) * 5)
         bag.rho = unlabeled_neg_weights
         unlabeled_neg_componenet_labels = []
@@ -171,7 +174,7 @@ def generateBags(NBags,
             ni = np.round(n_unlabeled_neg * w).astype(int)
             xunlabeled.append(comp(ni))
             unlabeled_neg_componenet_labels.append(np.ones(ni) * i)
-        bag.unlabeled_neg_componenet_labels = unlabeled_neg_componenet_labels
+        bag.unlabeled_neg_componenet_labels = np.concatenate(unlabeled_neg_componenet_labels)
         bag.x_unlabeled = np.concatenate(xunlabeled)
         bags.append(bag)
     return bags

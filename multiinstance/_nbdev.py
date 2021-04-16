@@ -60,7 +60,12 @@ index = {"getBag": "02_SyntheticData.ipynb",
          "EM": "33_EM.ipynb",
          "MultiEM": "33_EM.ipynb",
          "mvn_gen": "33_EM.ipynb",
-         "generateBags": "33_EM.ipynb"}
+         "generateBags": "33_EM.ipynb",
+         "PULoss": "38_Chainer_NNPU.ipynb",
+         "pu_loss": "38_Chainer_NNPU.ipynb",
+         "MLP": "38_Chainer_NNPU.ipynb",
+         "getPosterior": "38_Chainer_NNPU.ipynb",
+         "DensityRatioEM": "39_DREM.ipynb"}
 
 modules = ["data/syntheticData.py",
            "utils.py",
@@ -73,7 +78,9 @@ modules = ["data/syntheticData.py",
            "likelihood_method.py",
            "tree_likelihood.py",
            "data/gene.py",
-           "em.py"]
+           "em.py",
+           "nnpu.py",
+           "density_ratio_em.py"]
 
 doc_url = "https://Dzeiberg.github.io/multiinstance/"
 
