@@ -26,7 +26,7 @@ from copy import deepcopy
 class PULoss(function.Function):
     """wrapper of loss function for PU learning"""
 
-    def __init__(self, prior, loss=(lambda x: F.sigmoid(-x)), gamma=1, beta=0, nnpu=True):
+    def __init__(self, prior, loss=(lambda x: F.sigmoid(-x)), gamma=1, beta=0, nnpu=False):
         if not 0 < prior < 1:
             raise NotImplementedError("The class prior should be in (0, 1)")
         self.prior = prior
@@ -61,7 +61,8 @@ class PULoss(function.Function):
         y_positive = self.loss_func(self.x_in)
         y_unlabeled = self.loss_func(-self.x_in)
         positive_risk = F.sum(self.prior * positive / n_positive * y_positive)
-        negative_risk = F.sum((unlabeled / n_unlabeled - self.prior * positive / n_positive) * y_unlabeled)
+#         negative_risk = F.sum((unlabeled / n_unlabeled - self.prior * positive / n_positive) * y_unlabeled)
+        negative_risk = F.absolute(F.sum((unlabeled / n_unlabeled - self.prior * positive / n_positive) * y_unlabeled))
         objective = positive_risk + negative_risk
         if self.nnpu:
             if negative_risk.data < -self.beta:
@@ -117,16 +118,16 @@ def pu_loss(x, t, prior, loss=(lambda x: F.sigmoid(-x)), nnpu=True):
 # Cell
 def MLP(n_units, n_out):
     layer = ch.Sequential(L.Linear(n_units), F.relu)
-    model = layer.repeat(2)
+    model = layer.repeat(4)
     model.append(L.Linear(n_out))
 
     return model
 
 # Cell
-def getPosterior(x,y,alpha,args=EasyDict({"batchsize":32,
-                                    "hdim":4,
-                                    "epochs":10,
-                                    "lr":1e-3,
+def getPosterior(x,y,alpha,args=EasyDict({"batchsize":128,
+                                    "hdim":300,
+                                    "epochs":250,
+                                    "lr":1e-5,
                                     "weightDecayRate":0.005,
                                     })):
     # Data
@@ -135,7 +136,7 @@ def getPosterior(x,y,alpha,args=EasyDict({"batchsize":32,
     train_iter = ch.iterators.SerialIterator(train, args.batchsize)
     # model
     model = L.Classifier(MLP(args.hdim, 1),
-                         lossfun=PULoss(alpha, nnpu=True),
+                         lossfun=PULoss(alpha, nnpu=False),
                          accfun=F.accuracy)
     # optimizer
     optimizer = ch.optimizers.Adam(alpha=args.lr).setup(model)

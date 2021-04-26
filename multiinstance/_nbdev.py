@@ -65,7 +65,17 @@ index = {"getBag": "02_SyntheticData.ipynb",
          "pu_loss": "38_Chainer_NNPU.ipynb",
          "MLP": "38_Chainer_NNPU.ipynb",
          "getPosterior": "38_Chainer_NNPU.ipynb",
-         "DensityRatioEM": "39_DREM.ipynb"}
+         "DensityRatioEM": "39_DREM.ipynb",
+         "mixture": "40_Gaussian_DG.ipynb",
+         "DataGenerator": "40_Gaussian_DG.ipynb",
+         "GaussianDG": "40_Gaussian_DG.ipynb",
+         "UniformDG": "40_Gaussian_DG.ipynb",
+         "NormalMixDG": "40_Gaussian_DG.ipynb",
+         "MVNormalMixDG": "40_Gaussian_DG.ipynb",
+         "NormalMixRandomParameters": "40_Gaussian_DG.ipynb",
+         "NormalMixParameters": "40_Gaussian_DG.ipynb",
+         "min_aucpn": "40_Gaussian_DG.ipynb",
+         "GaussianMixtureDataGenerator": "40_Gaussian_DG.ipynb"}
 
 modules = ["data/syntheticData.py",
            "utils.py",
@@ -80,7 +90,8 @@ modules = ["data/syntheticData.py",
            "data/gene.py",
            "em.py",
            "nnpu.py",
-           "density_ratio_em.py"]
+           "density_ratio_em.py",
+           "data/gaussian_dg.py"]
 
 doc_url = "https://Dzeiberg.github.io/multiinstance/"
 

@@ -132,17 +132,19 @@ class MultiEM:
             self.bags[bagnum].unlabeled_assignments = assignments
 
 # Cell
-def mvn_gen(mean):
-    return lambda n: np.random.multivariate_normal(mean, np.eye(len(mean)),size=n)
+def mvn_gen(mean,cov):
+    return lambda n: np.random.multivariate_normal(mean, cov,size=n)
 
 def generateBags(NBags,
                  NPos=200,
                  NUnlabeled=1000,
                  pos_means=[[2,2], [-2,-2], [2,-2]],
-                 neg_means=[[0,0]]):
+                 neg_means=[[0,0]],
+                 pos_covs=[np.eye(2)]*3,
+                 neg_covs=[np.eye(2)]):
     bags = []
-    pos_components = [mvn_gen(m) for m in pos_means]
-    neg_components = [mvn_gen(m) for m in neg_means]
+    pos_components = [mvn_gen(m,c) for m,c in zip(pos_means,pos_covs)]
+    neg_components = [mvn_gen(m,c) for m,c in zip(neg_means,neg_covs)]
     for _ in range(NBags):
         pos_weights = np.random.dirichlet(np.ones(len(pos_components))*5)
         bag = EasyDict()
@@ -160,10 +162,12 @@ def generateBags(NBags,
         bag.alpha = alpha
         n_unlabeled_pos = np.round(NUnlabeled * alpha).astype(int)
         n_unlabeled_neg = NUnlabeled - n_unlabeled_pos
+        bag.hiddenLabels = np.array([])
         xunlabeled = []
         unlabeled_pos_componenet_labels = []
         for i,(comp,w) in enumerate(zip(pos_components,pos_weights)):
             ni = np.round(n_unlabeled_pos * w).astype(int)
+            bag.hiddenLabels = np.concatenate((bag.hiddenLabels, np.ones(ni)))
             xunlabeled.append(comp(ni))
             unlabeled_pos_componenet_labels.append(np.ones(ni) * i)
         bag.unlabeled_pos_componenet_labels = np.concatenate(unlabeled_pos_componenet_labels)
@@ -172,6 +176,7 @@ def generateBags(NBags,
         unlabeled_neg_componenet_labels = []
         for i, (comp,w) in enumerate(zip(neg_components, unlabeled_neg_weights)):
             ni = np.round(n_unlabeled_neg * w).astype(int)
+            bag.hiddenLabels = np.concatenate((bag.hiddenLabels, np.zeros(ni)))
             xunlabeled.append(comp(ni))
             unlabeled_neg_componenet_labels.append(np.ones(ni) * i)
         bag.unlabeled_neg_componenet_labels = np.concatenate(unlabeled_neg_componenet_labels)

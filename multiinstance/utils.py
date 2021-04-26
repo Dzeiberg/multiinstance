@@ -10,9 +10,9 @@ from scipy.stats import ks_2samp
 import matplotlib.pyplot as plt
 import numpy as np
 
-import networkx as nx
-import igraph as ig
-import leidenalg
+# import networkx as nx
+# import igraph as ig
+# import leidenalg
 from itertools import chain
 
 from dist_curve.curve_constructor import makeCurve, plotCurve
