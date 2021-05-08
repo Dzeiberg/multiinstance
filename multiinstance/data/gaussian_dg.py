@@ -132,6 +132,7 @@ class DataGenerator:
         return x_pu, y_pu, y_pn
 
     def pn_data(self, n, alpha):
+        "return x,y"
         x_p = self.data_pos(int(alpha*n))
         x_n = self.data_neg(int((1-alpha)*n))
         y_p = np.ones((len(x_p), 1))

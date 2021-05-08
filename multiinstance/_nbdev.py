@@ -64,7 +64,7 @@ index = {"getBag": "02_SyntheticData.ipynb",
          "PULoss": "38_Chainer_NNPU.ipynb",
          "pu_loss": "38_Chainer_NNPU.ipynb",
          "MLP": "38_Chainer_NNPU.ipynb",
-         "getPosterior": "38_Chainer_NNPU.ipynb",
+         "getPosterior": "43_TF_NNPU.ipynb",
          "DensityRatioEM": "39_DREM.ipynb",
          "mixture": "40_Gaussian_DG.ipynb",
          "DataGenerator": "40_Gaussian_DG.ipynb",
@@ -75,7 +75,15 @@ index = {"getBag": "02_SyntheticData.ipynb",
          "NormalMixRandomParameters": "40_Gaussian_DG.ipynb",
          "NormalMixParameters": "40_Gaussian_DG.ipynb",
          "min_aucpn": "40_Gaussian_DG.ipynb",
-         "GaussianMixtureDataGenerator": "40_Gaussian_DG.ipynb"}
+         "GaussianMixtureDataGenerator": "40_Gaussian_DG.ipynb",
+         "Basic": "43_TF_NNPU.ipynb",
+         "NNPULoss": "43_TF_NNPU.ipynb",
+         "NNPUAbsLoss": "43_TF_NNPU.ipynb",
+         "gradients": "43_TF_NNPU.ipynb",
+         "batch": "43_TF_NNPU.ipynb",
+         "batchPos": "43_TF_NNPU.ipynb",
+         "batchUL": "43_TF_NNPU.ipynb",
+         "batchY": "43_TF_NNPU.ipynb"}
 
 modules = ["data/syntheticData.py",
            "utils.py",
@@ -89,9 +97,10 @@ modules = ["data/syntheticData.py",
            "tree_likelihood.py",
            "data/gene.py",
            "em.py",
-           "nnpu.py",
+           "nnpu_original.py",
            "density_ratio_em.py",
-           "data/gaussian_dg.py"]
+           "data/gaussian_dg.py",
+           "nnpu.py"]
 
 doc_url = "https://Dzeiberg.github.io/multiinstance/"
 

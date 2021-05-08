@@ -21,6 +21,9 @@ class DensityRatioEM:
     def __init__(self, bags,n_clusters):
         self.bags = bags
         self.n_clusters = n_clusters
+        self.findGlobalClusters()
+        self.tau_posS = None
+        self.tau_uS = None
 
     def findGlobalClusters(self):
         "Run K-Means on the positives from all bags then assign each unlabeled point to a cluster based on the resulting clusters of K-Means"
@@ -32,55 +35,69 @@ class DensityRatioEM:
             self.bags[bagNum].positive_cluster_assignment = kmeans.predict(b.X_pos)
         self.kmeans = kmeans
 
-    def getClusterEstimates(self,componentInfo=None):
+    def getClusterEstimates(self,componentInfo=None,pupost=None):
         "Estimate the class prior and density ratios of the unlabeled points for each cluster"
-        self.clusterAlphaHats= np.zeros(self.n_clusters)
+
+        trainTransforms = False
+        if self.tau_posS is None:
+            trainTransforms = True
+            self.tau_posS = []
+            self.tau_uS = []
+            self.clusterAlphaHats= np.zeros(self.n_clusters)
         # NClusters x NBags size list containing the density ratio for the unlabeled points
         # from the specified bag in the specified cluster
         self.bagRatios = []
-        for cnum in range(self.n_clusters):
+        for cnum in tqdm(range(self.n_clusters),total=self.n_clusters,leave=False):
             unlabeledInCluster = [b.x_unlabeled[b.unlabeled_cluster_assignment == cnum] for b in self.bags]
             posInCluster = [b.X_pos[b.positive_cluster_assignment == cnum] for b in self.bags]
             unlabeled = np.concatenate(unlabeledInCluster)
             positive = np.concatenate(posInCluster)
             # estimate class prior
-            tau, aucpu = getOptimalTransform(np.concatenate((positive, unlabeled)),
-                                         np.concatenate((np.ones(positive.shape[0]),
-                                                         np.zeros(unlabeled.shape[0]))))
-            tau_pos = np.ascontiguousarray(tau[:positive.shape[0]].reshape((-1,1)))
-            tau_u = np.ascontiguousarray(tau[positive.shape[0]:].reshape((-1,1)))
-            self.clusterAlphaHats[cnum],_ = estimate(tau_pos, tau_u)
+            if trainTransforms:
+                tau, aucpu = getOptimalTransform(np.concatenate((positive, unlabeled)),
+                                             np.concatenate((np.ones(positive.shape[0]),
+                                                             np.zeros(unlabeled.shape[0]))))
+                tau_pos = np.ascontiguousarray(tau[:positive.shape[0]].reshape((-1,1)))
+                tau_u = np.ascontiguousarray(tau[positive.shape[0]:].reshape((-1,1)))
+                self.tau_posS.append(tau_pos)
+                self.tau_uS.append(tau_u)
+                self.clusterAlphaHats[cnum],_ = estimate(tau_pos, tau_u)
+            else:
+                tau_pos = self.tau_posS[cnum]
+                tau_u = self.tau_uS[cnum]
+
+
             ####
-            #self.clusterAlphaHats[cnum],_ = estimate(positive, unlabeled)
             # Estimate density ratio for all unlabeled points in each bag that are in this cluster
             self.bagRatios.append(self.estimateClusterDensityRatio(posInCluster,
                                                                    unlabeledInCluster,
                                                                    cnum,
-                                                                   componentInfo))
+                                                                   tau_pos,
+                                                                   tau_u,
+                                                                   componentInfo=componentInfo,
+                                                                   pupost=pupost))
 
     def ratioFromPosteriorVec(self, posts, alpha):
         return (alpha * (1 - posts)) / (posts * (1 - alpha))
 
-    def estimateClusterDensityRatio(self,posInCluster,unlabeledInCluster,cnum,componentInfo=None,
-                                 args=EasyDict(d={'batchsize': 128,
-                                                  'hdim': 4,
-                                                  'epochs': 100,
-                                                  'lr': 0.001,
-                                                  'weightDecayRate': 0.005})):
+    def estimateClusterDensityRatio(self,posInCluster,unlabeledInCluster,cnum,tau_pos,tau_u,
+                                    componentInfo=None,pupost=None,
+                                    args=EasyDict(d={'batchsize': 128,
+                                                     'hdim': 300,
+                                                     'epochs': 250,
+                                                     'lr': 0.001,
+                                                     'weightDecayRate': 0.005})):
         p = np.concatenate(posInCluster)
         u = np.concatenate(unlabeledInCluster)
         # PU Labels {1: pos, -1: unlabeled}
-        y = np.concatenate((np.ones(p.shape[0]),
-                            np.ones(u.shape[0])*-1)).astype(np.int32)
-        # Run NNPU
-        if componentInfo is None:
-            posteriors = getNNPUPosterior(np.concatenate((p,u)).astype(np.float32),
-                                          y,
-                                          self.clusterAlphaHats[cnum],
-                                          args = args)
-            # convert cluster posterior to density ratio
+        y = np.concatenate((np.ones((p.shape[0],1)),
+                            np.zeros((u.shape[0],1)))).astype(np.int32)
+        if pupost is not None:
+            posteriors,net = getNNPUPosterior(np.concatenate((p,u)).astype(np.float32),
+                                             y, self.clusterAlphaHats[cnum],pupost=pupost)
             ratios = np.nan_to_num(self.ratioFromPosteriorVec(posteriors, self.clusterAlphaHats[cnum]))
-        else:
+        # Run NNPU
+        elif componentInfo is not None:
             clusterMap = cdist(self.kmeans.cluster_centers_, componentInfo.posMeans).argmin(1)
             # pos
             cnum = clusterMap[cnum]
@@ -92,7 +109,12 @@ class DensityRatioEM:
                                  mean=componentInfo.negMeans[cnum],
                                  cov=componentInfo.negCovs[cnum])
             ratios = f0/f1
-
+        else:
+            posteriors,net = getNNPUPosterior(np.concatenate((p, u)).astype(np.float32),
+                                          y,
+                                          self.clusterAlphaHats[cnum],)
+            # convert cluster posterior to density ratio
+            ratios = np.nan_to_num(self.ratioFromPosteriorVec(posteriors, self.clusterAlphaHats[cnum]))
         # Remove positive points from posterior list
         ratios = ratios[p.shape[0]:]
         # Store the ratios for the unlabeled set of each bag
@@ -116,11 +138,13 @@ class DensityRatioEM:
                     eta_i_j = np.mean(eta_i_j / den)
                 self.eta[bagNum,cnum] = eta_i_j
 
-    def run(self,componentInfo=None):
-        self.findGlobalClusters()
-        self.getClusterEstimates(componentInfo)
+    def run(self,componentInfo=None,pupost=None):
+
+        self.getClusterEstimates(componentInfo=componentInfo,
+                                 pupost=pupost)
         self.EM()
         self.estimateBagParameters()
+
 
     def posterior(self, bagNum, clusterNum):
         eta_i_j = self.eta[bagNum, clusterNum]
