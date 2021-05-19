@@ -65,7 +65,7 @@ index = {"getBag": "02_SyntheticData.ipynb",
          "pu_loss": "38_Chainer_NNPU.ipynb",
          "MLP": "38_Chainer_NNPU.ipynb",
          "getPosterior": "43_TF_NNPU.ipynb",
-         "DensityRatioEM": "39_DREM.ipynb",
+         "DensityRatioEM": "47_DREM_2.ipynb",
          "mixture": "40_Gaussian_DG.ipynb",
          "DataGenerator": "40_Gaussian_DG.ipynb",
          "GaussianDG": "40_Gaussian_DG.ipynb",
@@ -83,7 +83,11 @@ index = {"getBag": "02_SyntheticData.ipynb",
          "batch": "43_TF_NNPU.ipynb",
          "batchPos": "43_TF_NNPU.ipynb",
          "batchUL": "43_TF_NNPU.ipynb",
-         "batchY": "43_TF_NNPU.ipynb"}
+         "batchY": "43_TF_NNPU.ipynb",
+         "RankNet": "45_Rank.ipynb",
+         "RankNet2": "45_Rank.ipynb",
+         "getModel": "46_VPU.ipynb",
+         "train": "46_VPU.ipynb"}
 
 modules = ["data/syntheticData.py",
            "utils.py",
@@ -100,7 +104,9 @@ modules = ["data/syntheticData.py",
            "nnpu_original.py",
            "density_ratio_em.py",
            "data/gaussian_dg.py",
-           "nnpu.py"]
+           "nnpu.py",
+           "ranker.py",
+           "vpu.py"]
 
 doc_url = "https://Dzeiberg.github.io/multiinstance/"
 
