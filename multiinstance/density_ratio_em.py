@@ -547,42 +547,34 @@ class DensityRatioEM:
             else:
                 raise ValueError("Invalid inputType specified: {}".format(inputType))
             self.bagRatios.append(self.splitRatiosIntoBags(ratios,cnum))
-#         print(roc_auc_score(np.concatenate(self.debugLabels),
-#                             np.concatenate(self.debugPosteriors)))
-    def EM(self,NIters=500):
+        print(roc_auc_score(np.concatenate(self.debugLabels),
+                            np.concatenate(self.debugPosteriors)))
+    def EM(self,NIters=25):
         self.eta = np.ones((len(self.bags), self.n_clusters)) * self.clusterAlphaHats
 #         self.eta = np.copy(self.trueEta)
         plt.scatter(self.eta.ravel(), self.trueEta.ravel())
         plt.plot([0,1],[0,1])
         plt.title(np.mean(np.abs(self.eta - self.trueEta)))
         plt.show()
-        for em_iter in range(NIters):
+        for em_iter in trange(NIters):
             for cnum in range(self.n_clusters):
                 for bagNum,b in enumerate(self.bags):
                     ratios = self.bagRatios[cnum][bagNum]
-                    comp = self.components[cnum]
-                    unlabeled = b.x_unlabeled[b.unlabeled_cluster_assignment == cnum]
-                    positive = b.X_pos[b.positive_cluster_assignment == cnum]
-                    f1 = ss.multivariate_normal.pdf(unlabeled,
-                                                    mean=comp.posMean,
-                                                    cov=comp.posCov)
-                    # Negative density
-                    f0 = ss.multivariate_normal.pdf(unlabeled,
-                                                    mean=comp.negMean,
-                                                    cov=comp.negCov)
                     eij = self.eta[bagNum,cnum]
-                    densities = eij * f1 + (1-eij) * f0
-                    densities = densities / densities.sum()
-                    posts = eij * f1 / (eij * f1 + (1 - eij) * f0)
-                    plt.hist(posts,density=True)
-                    plt.vlines(np.mean(posts),0,10,color="red")
-                    plt.vlines(self.trueEta[bagNum,cnum],0,10,color="black")
-                    plt.xlim(0,1)
-                    plt.show()
+#                     comp = self.components[cnum]
+#                     unlabeled = b.x_unlabeled[b.unlabeled_cluster_assignment == cnum]
+#                     # Positive density
+#                     f1 = ss.multivariate_normal.pdf(unlabeled,mean=comp.posMean,cov=comp.posCov)
+#                     # Negative density
+#                     f0 = ss.multivariate_normal.pdf(unlabeled,mean=comp.negMean,cov=comp.negCov)
+#                     f = eij * f1 + (1 - eij) * f0
+#                     f = f / f.sum()
+#                     self.eta[bagNum,cnum] = np.dot(posts, f)
+                    posts = eij / (eij + (1-eij) * ratios)
                     self.eta[bagNum,cnum] = np.mean(posts)
             plt.scatter(self.eta.ravel(), self.trueEta.ravel())
             plt.plot([0,1],[0,1])
-            plt.title(np.mean(np.abs(self.eta - self.trueEta)))
+            plt.title(np.nanmean(np.abs(self.eta - self.trueEta)))
             plt.show()
 
     def run(self,densityRatioInputType,componentInfo=None):
@@ -614,8 +606,10 @@ class DensityRatioEM:
         self.rho = np.zeros((N,self.n_clusters))
         for bagNum, b in enumerate(self.bags):
             eta_j = self.eta[bagNum]
-            gamma_j = np.unique(b.unlabeled_cluster_assignment,
-                                return_counts=True)[1] / b.unlabeled_cluster_assignment.shape[0]
+            label,count = np.unique(b.unlabeled_cluster_assignment,return_counts=True)
+            gamma_j = np.zeros(self.n_clusters)
+            for l,c in zip(label,count):
+                gamma_j[l] = c / count.sum()
             alpha_j = eta_j.dot(gamma_j)
             pi_j = np.multiply(eta_j, gamma_j) / alpha_j
             rho_j = np.multiply(1 - eta_j, gamma_j) / (1 - alpha_j)
