@@ -172,16 +172,28 @@ def generateBags(NBags,
         bag.x_unlabeled = np.zeros((0,D))
         # sample positive data
         for ci in tqdm(bag.posClusterAssignment,leave=False):
-            xi = np.random.multivariate_normal(pos_means[ci], pos_covs[ci])[None]
+            xi = ss.multivariate_normal(pos_means[ci], pos_covs[ci]).rvs()
+            if D==1:
+                xi = xi[None,None]
+            else:
+                xi = xi[None]
             bag.X_pos = np.concatenate((bag.X_pos,xi))
 
         # sample unlabeled pos data
         for ci in tqdm(bag.unlabeledPosClusterAssignment,leave=False):
-            xi = np.random.multivariate_normal(pos_means[ci], pos_covs[ci])[None]
+            xi = ss.multivariate_normal(pos_means[ci], pos_covs[ci]).rvs()
+            if D==1:
+                xi = xi[None,None]
+            else:
+                xi = xi[None]
             bag.x_unlabeled = np.concatenate((bag.x_unlabeled, xi))
         # sample unlabeled neg data
         for ci in tqdm(bag.unlabeledNegClusterAssignment,leave=False):
-            xi = np.random.multivariate_normal(neg_means[ci], neg_covs[ci])[None]
+            xi = ss.multivariate_normal(neg_means[ci], neg_covs[ci]).rvs()
+            if D==1:
+                xi = xi[None,None]
+            else:
+                xi = xi[None]
             bag.x_unlabeled = np.concatenate((bag.x_unlabeled, xi))
         bags.append(bag)
     return bags

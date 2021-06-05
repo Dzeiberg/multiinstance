@@ -404,16 +404,6 @@ class DensityRatioEM:
         print("posterior auc ",roc_auc_score(hiddenLabels,posteriors))
         ratios = self.ratioFromPosteriorVec(posteriors,self.clusterAlphaHats[cnum])
         return ratios
-        """
-        xPN = np.concatenate((positive,unlabeled))
-        yPN = np.concatenate((np.ones(positive.shape[0]),hiddenLabels)).astype(bool)
-        posteriors = self.trainPNPosterior(xPN,yPN)[positive.shape[0]:]
-        print("posteriors auc",roc_auc_score(hiddenLabels, posteriors))
-        NP,NU = positive.shape[0], unlabeled.shape[0]
-        classPrior = (NP + self.clusterAlphaHats[cnum] * NU) / (NP + NU)
-        ratios = self.ratioFromPosteriorVec(posteriors, classPrior)
-        return ratios
-        """
 
 
     def getNNPUInput(self,cnum,inputType):
@@ -504,9 +494,9 @@ class DensityRatioEM:
             self.components = None
             return
         # maps kmeans cluster to true component index
-        clusterMap = cdist(self.kmeans.cluster_centers_, componentInfo.posMeans).argmin(1)
+        self.clusterMap = cdist(self.kmeans.cluster_centers_, componentInfo.posMeans).argmin(1)
         self.components = []
-        for comp in clusterMap:
+        for comp in self.clusterMap:
             compInfo = EasyDict()
             compInfo.posMean = componentInfo.posMeans[comp]
             compInfo.negMean = componentInfo.negMeans[comp]
@@ -549,16 +539,21 @@ class DensityRatioEM:
             self.bagRatios.append(self.splitRatiosIntoBags(ratios,cnum))
         print(roc_auc_score(np.concatenate(self.debugLabels),
                             np.concatenate(self.debugPosteriors)))
-    def EM(self,NIters=25):
+    def EM(self,NIters=50):
+        true = self.trueEta[:,self.clusterMap]
         self.eta = np.ones((len(self.bags), self.n_clusters)) * self.clusterAlphaHats
 #         self.eta = np.copy(self.trueEta)
-        plt.scatter(self.eta.ravel(), self.trueEta.ravel())
+        plt.scatter(self.eta.ravel(), true.ravel())
         plt.plot([0,1],[0,1])
-        plt.title(np.mean(np.abs(self.eta - self.trueEta)))
+        plt.title("Eta MAE: {:.3f} - AUC: {:.3f}".format(np.nanmean(np.abs(self.eta - true)),
+                                                       self.getAUC()))
+        cmap = plt.get_cmap(name="tab20")
         plt.show()
         for em_iter in trange(NIters):
+            colors = []
             for cnum in range(self.n_clusters):
                 for bagNum,b in enumerate(self.bags):
+                    colors.append(cmap(cnum))
                     ratios = self.bagRatios[cnum][bagNum]
                     eij = self.eta[bagNum,cnum]
 #                     comp = self.components[cnum]
@@ -572,9 +567,10 @@ class DensityRatioEM:
 #                     self.eta[bagNum,cnum] = np.dot(posts, f)
                     posts = eij / (eij + (1-eij) * ratios)
                     self.eta[bagNum,cnum] = np.mean(posts)
-            plt.scatter(self.eta.ravel(), self.trueEta.ravel())
+            plt.scatter(self.eta.ravel(), true.ravel(),s=25 * self.gamma.ravel(),color=colors)
             plt.plot([0,1],[0,1])
-            plt.title(np.nanmean(np.abs(self.eta - self.trueEta)))
+            plt.title("Eta MAE: {:.3f} - AUC: {:.3f}".format(np.nanmean(np.abs(self.eta - true)),
+                                                             self.getAUC()))
             plt.show()
 
     def run(self,densityRatioInputType,componentInfo=None):
