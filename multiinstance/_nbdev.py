@@ -11,7 +11,7 @@ index = {"getBag": "02_SyntheticData.ipynb",
          "splitIntoBags": "03_Dataset_Utils.ipynb",
          "getTransformScores": "03_Dataset_Utils.ipynb",
          "getBootstrapSample": "03_Dataset_Utils.ipynb",
-         "estimate": "03_Dataset_Utils.ipynb",
+         "estimate": "densityRatioSugiyama.ipynb",
          "getEsts": "03_Dataset_Utils.ipynb",
          "getBagAlphaHats": "03_Dataset_Utils.ipynb",
          "getCliqueAlphaHats": "03_Dataset_Utils.ipynb",
@@ -91,7 +91,11 @@ index = {"getBag": "02_SyntheticData.ipynb",
          "RankNetTies": "45_Rank.ipynb",
          "getModel": "46_VPU.ipynb",
          "train": "46_VPU.ipynb",
-         "generateParams": "47_DREM_2.ipynb"}
+         "generateParams": "47_DREM_2.ipynb",
+         "r": "densityRatioSugiyama.ipynb",
+         "ulsif": "densityRatioSugiyama.ipynb",
+         "clsif": "densityRatioSugiyama.ipynb",
+         "eval_basis": "densityRatioSugiyama.ipynb"}
 
 modules = ["data/syntheticData.py",
            "utils.py",
@@ -111,7 +115,8 @@ modules = ["data/syntheticData.py",
            "nnpu.py",
            "ranker.py",
            "vpu.py",
-           "lambdaRank.py"]
+           "lambdaRank.py",
+           "densityRatioSugiyama.py"]
 
 doc_url = "https://Dzeiberg.github.io/multiinstance/"
 

@@ -232,6 +232,8 @@ from tqdm.notebook import trange
 from sklearn.model_selection import StratifiedKFold
 import tensorflow as tf
 
+from .densityRatioSugiyama import estimate as sugiyamaEstimate
+
 # Cell
 class DensityRatioEM:
     def __init__(self, bags,n_clusters):
@@ -405,7 +407,6 @@ class DensityRatioEM:
         ratios = self.ratioFromPosteriorVec(posteriors,self.clusterAlphaHats[cnum])
         return ratios
 
-
     def getNNPUInput(self,cnum,inputType):
         """
         Get the input to AbsNNPU
@@ -506,6 +507,12 @@ class DensityRatioEM:
             compInfo.r = componentInfo.rs[comp]
             self.components.append(compInfo)
 
+    def sugiyama(self,cnum):
+        unlabeled,positive = self.getClusterMembers(cnum)
+        hiddenLabels = np.concatenate([b.hiddenLabels[b.unlabeled_cluster_assignment == cnum] for b in self.bags])
+        ratios = sugiyamaEstimate(unlabeled,hiddenLabels)
+        return ratios
+
     def getBagRatios(self,inputType,componentInfo=None):
         """
         Arguments:
@@ -534,11 +541,13 @@ class DensityRatioEM:
                 ratios = self.ratioEstimation(cnum)
             elif "nnpu" in inputType:
                 ratios = self.estimateClusterDensityRatio(cnum,inputType.replace("nnpu ",""))
+            elif inputType == "sugiyama":
+                ratios = self.sugiyama(cnum)
             else:
                 raise ValueError("Invalid inputType specified: {}".format(inputType))
             self.bagRatios.append(self.splitRatiosIntoBags(ratios,cnum))
-        print(roc_auc_score(np.concatenate(self.debugLabels),
-                            np.concatenate(self.debugPosteriors)))
+#         print(roc_auc_score(np.concatenate(self.debugLabels),
+#                             np.concatenate(self.debugPosteriors)))
     def EM(self,NIters=50):
         true = self.trueEta[:,self.clusterMap]
         self.eta = np.ones((len(self.bags), self.n_clusters)) * self.clusterAlphaHats
